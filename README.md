@@ -1,12 +1,8 @@
-# Global terrestrial water-cycle network
+# Global terrestrial water-cycle network analysis 
 
 Reproducibility resources for a network-based analysis of the global terrestrial water cycle, prepared to accompany a manuscript submitted to *Nature Water*.
 
-This repository contains the source data, Python workflows, and compact reference outputs needed to reproduce the network diagrams, contribution/delivery/delta matrices, centrality analyses, groundwater-routing sensitivity analyses, and four main manuscript figures.
-
-<p align="center">
-  <img src="reproduced_outputs/network_plots/Reference_networks.png" width="900" alt="Reference terrestrial water-cycle networks">
-</p>
+This repository contains the source data, Python workflows, and compact reference outputs needed to reproduce the network diagrams, contribution/delivery/delta matrices, centrality analyses, groundwater-routing sensitivity analyses.
 
 ## Repository contents
 
@@ -20,7 +16,6 @@ This repository contains the source data, Python workflows, and compact referenc
 | `requirements.txt` | Tested Python package versions. |
 | `reproduced_outputs/` | Compact reference workbooks, tables, manifests, and PNG figures. |
 
-The publication-quality TIFF files are intentionally not versioned because the complete set is about 1.18 GB and individual files can exceed GitHub's regular 100 MB file limit. They are regenerated automatically by the workflow.
 
 ## Quick start
 
