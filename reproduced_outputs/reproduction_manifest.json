@@ -1,0 +1,292 @@
+{
+  "generated_at_utc": "2026-08-11T13:38:49.580471+00:00",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "command": "reproduce_all_outputs.py --input All global networks.xlsx --rgw0 Rgw0_data.gpkg --output reproduced_outputs",
+  "steps": [
+    "network",
+    "matrix",
+    "centrality",
+    "sensitivity",
+    "main"
+  ],
+  "skip_fig1": false,
+  "input_workbook": {
+    "path": "All global networks.xlsx",
+    "size_bytes": 57446,
+    "sha256": "e534dc2c47b4c6b8f771d15df99c2fb229fb053681f39fe8fa38573c6049d4db"
+  },
+  "rgw0_file": {
+    "path": "Rgw0_data.gpkg",
+    "size_bytes": 1855488,
+    "sha256": "50cd792e0ffa78931f5a16c01d84910150385b91094ea821c0e12c74e0abf337"
+  },
+  "package_versions": {
+    "numpy": "2.3.5",
+    "pandas": "2.3.3",
+    "matplotlib": "3.10.7",
+    "networkx": "3.6",
+    "openpyxl": "3.1.5",
+    "geopandas": "1.1.1",
+    "shapely": "2.1.2",
+    "pyproj": "3.7.2",
+    "basemap": "2.0.0"
+  },
+  "outputs": [
+    {
+      "path": "All global networks-results-1.xlsx",
+      "size_bytes": 85187,
+      "sha256": "767e9420868df20804481f5a03936927d16ddd8e6be1498e26f802798d233211"
+    },
+    {
+      "path": "All global networks-results-2.xlsx",
+      "size_bytes": 259481,
+      "sha256": "1dcf499dd5e227cc09681bb751670cda55e9c6844be3596fbf2d09e4f4379ec8"
+    },
+    {
+      "path": "centrality_output/Fig2.png",
+      "size_bytes": 1522452,
+      "sha256": "5eb127b9c1e4722bc8ac171072fbdf4965f05e33ea2d3aec9898f087c9ad8582"
+    },
+    {
+      "path": "centrality_output/Fig2.tiff",
+      "size_bytes": 48459806,
+      "sha256": "4b188540575608704944fea7c816e401290ab166f843ad8945e7adf1890fa6e9"
+    },
+    {
+      "path": "centrality_output/radar_bar_ERA5.png",
+      "size_bytes": 586208,
+      "sha256": "e6b0dc8f50aa0de6af5bd53d63255f3756a80dba1608bddc819d79ee32ef0f3d"
+    },
+    {
+      "path": "centrality_output/radar_bar_ERA5.tiff",
+      "size_bytes": 59555086,
+      "sha256": "c2c39593cd803002f871c9a33a2fc11f887ad312058eef85e21a9ee0245baa69"
+    },
+    {
+      "path": "centrality_output/radar_bar_GLDAS.png",
+      "size_bytes": 582994,
+      "sha256": "0da6721a143e8746db09b0447c8aaf17711f210d96954fe0e39042d0ef0d8891"
+    },
+    {
+      "path": "centrality_output/radar_bar_GLDAS.tiff",
+      "size_bytes": 59535750,
+      "sha256": "25bf2a37a552e57242920871ddfd1335f11042e5002d45d008864dafd603ab82"
+    },
+    {
+      "path": "centrality_output/radar_bar_Mixed-GLEAM.png",
+      "size_bytes": 593030,
+      "sha256": "31931c3accdbd22a3e6236390230da2477e815e3703c4542cd5382970afdaeb2"
+    },
+    {
+      "path": "centrality_output/radar_bar_Mixed-GLEAM.tiff",
+      "size_bytes": 59555086,
+      "sha256": "9285572bb79ac63bed7d2a4aafa2405be527ee947ff4aa0f96bc77f80573f267"
+    },
+    {
+      "path": "centrality_output/radar_bar_Obs.png",
+      "size_bytes": 586369,
+      "sha256": "55bc537c4273303afe2f14aec040a38ef295bf0f34e98a1331db6ff0cae4cd66"
+    },
+    {
+      "path": "centrality_output/radar_bar_Obs.tiff",
+      "size_bytes": 59535750,
+      "sha256": "19829867338b1a203d3cd76a07b7893155c0d35367cb3bd212a834c535e2517d"
+    },
+    {
+      "path": "centrality_output/radar_bar_overall.png",
+      "size_bytes": 669984,
+      "sha256": "847caacb9b7449184ada6e6eb349bea54c95670c3588a7c40753c049052a8320"
+    },
+    {
+      "path": "centrality_output/radar_bar_overall.tiff",
+      "size_bytes": 60100170,
+      "sha256": "8b82ec2b089af18ffb63526141e29ba65c567a3374a2aca6e396b53483a0ffe9"
+    },
+    {
+      "path": "matrix_output/delta_std_ranking.csv",
+      "size_bytes": 4227,
+      "sha256": "90359ab9a5ca88be8792e4b4a9d1f25073f01a4e321ca3d9f45f6aee327c60ee"
+    },
+    {
+      "path": "matrix_output/Fig3.png",
+      "size_bytes": 650398,
+      "sha256": "277697a78e0921f7af01f64ad76f5911d749172ad2bf9ee434ad6c4eb6d8160f"
+    },
+    {
+      "path": "matrix_output/Fig3.tiff",
+      "size_bytes": 57899310,
+      "sha256": "696cae267cd30a5aa162c17324e53baf3d2ee1981529141ff0e1833c4d8da0ec"
+    },
+    {
+      "path": "matrix_output/first6_original_contribution_heatmaps.png",
+      "size_bytes": 511050,
+      "sha256": "b8f96abc053f058d5148af0293b75765fbd421a9804e80fe2ed9c024c91e196c"
+    },
+    {
+      "path": "matrix_output/first6_original_contribution_heatmaps.tiff",
+      "size_bytes": 49573774,
+      "sha256": "aa1ae273371884132d474df8dbef418a206dab01d262735b39d4e17e933ba16c"
+    },
+    {
+      "path": "matrix_output/first6_original_delivery_heatmaps.png",
+      "size_bytes": 645039,
+      "sha256": "7732ac42ccf022ceea991cc78cc3a71c41db60a24348e82849340c1d41597de6"
+    },
+    {
+      "path": "matrix_output/first6_original_delivery_heatmaps.tiff",
+      "size_bytes": 49573774,
+      "sha256": "6efd44db0f27d329d596283d6af397757c7c3f2a5ed9046d1502ad88bd448c14"
+    },
+    {
+      "path": "matrix_output/first6_relavg_contribution_heatmaps.png",
+      "size_bytes": 627105,
+      "sha256": "d6376a063a92cfe76a1cc20a24dc82df41312392d4629fb1dadc6da74a693d7b"
+    },
+    {
+      "path": "matrix_output/first6_relavg_contribution_heatmaps.tiff",
+      "size_bytes": 49762446,
+      "sha256": "46f34889c4064e06f325f99858ffb6bb2af295eafc76342b980926d935d1be3a"
+    },
+    {
+      "path": "matrix_output/first6_relavg_delivery_heatmaps.png",
+      "size_bytes": 619717,
+      "sha256": "19dcd1ec232c463bc930aa86c1b87817901c5c8c43a2925f7f1389253ab20c97"
+    },
+    {
+      "path": "matrix_output/first6_relavg_delivery_heatmaps.tiff",
+      "size_bytes": 48948798,
+      "sha256": "dfd4f313515acb069cb331f541bbebcb534dee7340fa8476f278a6ba32577a32"
+    },
+    {
+      "path": "matrix_output/long_results.csv",
+      "size_bytes": 67874,
+      "sha256": "ba660de144e4e38d1514594f86419093ebc0e921d772edf0d253e26c8ec1bfe4"
+    },
+    {
+      "path": "matrix_output/top_pathways.csv",
+      "size_bytes": 24220,
+      "sha256": "a5da017242569d1d0affd42e3417e2c0e7ce0194d9d7474648f287a515842d67"
+    },
+    {
+      "path": "network_plots/Reference_networks.png",
+      "size_bytes": 1052899,
+      "sha256": "0046a9b5f4be40885693af5b41868c303853dd68e21b5579fed3af1ca57dceee"
+    },
+    {
+      "path": "network_plots/Reference_networks.tiff",
+      "size_bytes": 57635406,
+      "sha256": "b4e1b83bc2ae0e5ce0528ae207eab10531f3c4288f2bac800801568c6d8cca02"
+    },
+    {
+      "path": "network_plots/Various_datasets.png",
+      "size_bytes": 829161,
+      "sha256": "cb22ccb9b0f059ed91241e2d336f1169bf9f2dd43698429cee2dcf54f8902d15"
+    },
+    {
+      "path": "network_plots/Various_datasets.tiff",
+      "size_bytes": 43935566,
+      "sha256": "6144290bc5e399777186d9243d3108a22505f4c9fa689844843bf67651239c35"
+    },
+    {
+      "path": "sensitivity_outputs/alphaGW_variance_components_delta_pathways.csv",
+      "size_bytes": 9300,
+      "sha256": "9253fe372859c7d07ff8f1a6af0040b0efecc5ae20a84b84203b186d84d9c267"
+    },
+    {
+      "path": "sensitivity_outputs/alphaGW_variance_components_node_metrics.csv",
+      "size_bytes": 7051,
+      "sha256": "807acbade42fab1a6bd62f048ca1efdcce87765eeb793758990a6850868f4a7c"
+    },
+    {
+      "path": "sensitivity_outputs/alphaGW_variance_share_delta_pathways.csv",
+      "size_bytes": 9928,
+      "sha256": "cf1a99d5932ecb4100cbdff0549d76aef7416c0c0193c3ba06e8c03b0b4c2aa2"
+    },
+    {
+      "path": "sensitivity_outputs/alphaGW_variance_share_delta_pathways_wide.csv",
+      "size_bytes": 692,
+      "sha256": "d7e44ccbe4c9f6d24862194e0213d5d030b9a1ad2458a53d372f22390c8a5904"
+    },
+    {
+      "path": "sensitivity_outputs/alphaGW_variance_share_node_metrics.csv",
+      "size_bytes": 7588,
+      "sha256": "bc1c2362c6afe1d33a321b4bb8bff31c9fab0a6a6261916a59987cd5b46713a4"
+    },
+    {
+      "path": "sensitivity_outputs/alphaGW_variance_share_node_metrics_wide.csv",
+      "size_bytes": 650,
+      "sha256": "31b3461d13bb376e56e8a2d081c183653a887121f489eeb133cdfab064bf6684"
+    },
+    {
+      "path": "sensitivity_outputs/Fig1.png",
+      "size_bytes": 961193,
+      "sha256": "bc788fa205bd00167e4ea0bb4f438725dce8b9047eee1074c244c5e299551f65"
+    },
+    {
+      "path": "sensitivity_outputs/Fig1.tiff",
+      "size_bytes": 27071530,
+      "sha256": "7db0d715bc37d8a7d1d9942d63a7597e9e3fbd0584f107845078df319b23d543"
+    },
+    {
+      "path": "sensitivity_outputs/Fig1_panelA.csv",
+      "size_bytes": 275,
+      "sha256": "f68dae65bfebf610201631d127d2a3425c2c44208565e58ace8d501cd8d9b621"
+    },
+    {
+      "path": "sensitivity_outputs/Fig1_panelB.csv",
+      "size_bytes": 3146,
+      "sha256": "436978f4439aaaa4057aae495c4d084f2bde924349d2a454c0c4dfa543db9376"
+    },
+    {
+      "path": "sensitivity_outputs/Fig4.png",
+      "size_bytes": 240459,
+      "sha256": "17ba0e77ba0cd7cf22f32e358af15d08961a62addb4af068d6835f4a46172613"
+    },
+    {
+      "path": "sensitivity_outputs/Fig4.tiff",
+      "size_bytes": 26730830,
+      "sha256": "9a55f9531978408fc8ba3fd0d7641c30789d371f1d29058ad5095c1ffa91bb06"
+    },
+    {
+      "path": "sensitivity_outputs/sensitivity_centrality_metrics.png",
+      "size_bytes": 843002,
+      "sha256": "2ec12667a9a6b9da5cfacb79b0d14814ed2919f1551f7c428cce236437b9d690"
+    },
+    {
+      "path": "sensitivity_outputs/sensitivity_centrality_metrics.tiff",
+      "size_bytes": 80210366,
+      "sha256": "7cbeafcd782462f7fa6bc4032bf64a2c85e252f8572793c676b406127d8c9f79"
+    },
+    {
+      "path": "sensitivity_outputs/sensitivity_contribution_matrix.png",
+      "size_bytes": 844856,
+      "sha256": "c089092101dbdf4cf92b9f3a461e80dcfb5585f6593c68913ec5df58d82c7d8f"
+    },
+    {
+      "path": "sensitivity_outputs/sensitivity_contribution_matrix.tiff",
+      "size_bytes": 114846062,
+      "sha256": "b4e0cbd3fd1e895656dc5ef182468743a3bc2c0b6ddea5d53ef0c35f09cb49c9"
+    },
+    {
+      "path": "sensitivity_outputs/sensitivity_delivery_matrix.png",
+      "size_bytes": 931413,
+      "sha256": "6327265e316785ba20e1a6737557c215d9c37173b6fd7d258bc86962e0dd1b8f"
+    },
+    {
+      "path": "sensitivity_outputs/sensitivity_delivery_matrix.tiff",
+      "size_bytes": 114846062,
+      "sha256": "438fc427d26b899ce2fad4288a514c6fcab8068d88c47fd5bfc2979cce63e04e"
+    },
+    {
+      "path": "sensitivity_outputs/sensitivity_delta_matrix.png",
+      "size_bytes": 1045554,
+      "sha256": "61a9e631c7b932c9852624d8854441c4b6a13a52245b7be410935ec682f4ee18"
+    },
+    {
+      "path": "sensitivity_outputs/sensitivity_delta_matrix.tiff",
+      "size_bytes": 115508110,
+      "sha256": "73b41bc4601dd2d603f1e9c298c22d4420315e4f13047700161dfda93a77e4fd"
+    }
+  ]
+}

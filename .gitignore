@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Operating-system metadata
+Thumbs.db
+.DS_Store
+
+# Publication-quality TIFFs are reproducible but too large for regular GitHub storage.
+reproduced_outputs/**/*.tif
+reproduced_outputs/**/*.tiff
