@@ -4,6 +4,16 @@ __pycache__/
 venv/
 .pytest_cache/
 
+# Local figure runs outside the canonical reproduced_outputs tree
+/centrality_output/
+/main_figures/
+/matrix_output/
+/network_plots/
+/sensitivity_outputs/
+/terminal_statements.txt
+/reproduced_outputs_fresh*/
+/package_build*/
+
 # Operating-system metadata
 Thumbs.db
 .DS_Store

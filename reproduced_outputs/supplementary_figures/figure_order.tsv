@@ -1,0 +1,13 @@
+figure	file	source	content
+FigS1	FigS1.png	source_figures/FigS1_relation_matrices.png	Relation matrices for six global water-cycle assessments
+FigS2	FigS2.png	centrality_output/radar_bar_overall.png	Complete node-level centrality profiles across six global water-cycle assessments
+FigS3	FigS3.png	matrix_output/first6_original_contribution_heatmaps.png	Contribution matrices across six global water-cycle assessments
+FigS4	FigS4.png	matrix_output/first6_relavg_contribution_heatmaps.png	Relative contribution matrices across six global water-cycle assessments
+FigS5	FigS5.png	matrix_output/first6_original_delivery_heatmaps.png	Delivery matrices across six global water-cycle assessments
+FigS6	FigS6.png	matrix_output/first6_relavg_delivery_heatmaps.png	Relative delivery matrices across six global water-cycle assessments
+FigS7	FigS7.png	centrality_output/FigS_delta_std_ranking_excluding_SS85.png	Sensitivity of cross-network pathway variability to exclusion of SS-85
+FigS8	FigS8.png	network_plots/Various_datasets.png	Dataset-based network structures used for alphaGW sensitivity experiments
+FigS9	FigS9.png	sensitivity_outputs/sensitivity_centrality_metrics.png	Full dataset-based sensitivity of node-level network metrics to alphaGW
+FigS10	FigS10.png	sensitivity_outputs/sensitivity_contribution_matrix.png	Dataset-based sensitivity of relative contribution matrices to alphaGW
+FigS11	FigS11.png	sensitivity_outputs/sensitivity_delivery_matrix.png	Dataset-based sensitivity of relative delivery matrices to alphaGW
+FigS12	FigS12.png	sensitivity_outputs/sensitivity_delta_matrix.png	Dataset-based sensitivity of the Delta matrix to alphaGW

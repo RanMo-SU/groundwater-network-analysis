@@ -62,6 +62,7 @@ def create_network_graph_workflow(input_file: str | Path, output_root: str | Pat
         for text_artist in fig.findobj(match=Text):
             text_artist.set_fontfamily(FIGURE_FONT_FAMILY)
 
+
     # ==================================================
     # CONFIGURATION
     # ==================================================
@@ -75,6 +76,9 @@ def create_network_graph_workflow(input_file: str | Path, output_root: str | Pat
     NODE_ROW_OFFSET = 3
     DATA_ROW_OFFSET = 4
     KEEP_FIRST_N_NETWORKS = 6
+    REFERENCE_ASSESSMENT_ORDER = [
+        "SS-85", "Ab-19", "OK-06", "Wr-13", "Tr-14", "AD-23"
+    ]
 
     CLEAR_OLD_NETWORK_PLOTS = True
     LABEL_EDGES = True
@@ -967,6 +971,19 @@ def create_network_graph_workflow(input_file: str | Path, output_root: str | Pat
             if CREATE_INDIVIDUAL_FIGURES:
                 output_stem = f"{safe_filename(case_name)}_network"
                 saved_all.extend(draw_network(case_name, matrix, output_stem))
+
+        reference_by_name = dict(reference_items)
+        missing_reference = [
+            name for name in REFERENCE_ASSESSMENT_ORDER if name not in reference_by_name
+        ]
+        if missing_reference:
+            raise ValueError(
+                "Reference networks missing from the canonical assessment order: "
+                f"{missing_reference}"
+            )
+        reference_items = [
+            (name, reference_by_name[name]) for name in REFERENCE_ASSESSMENT_ORDER
+        ]
 
         if CREATE_REFERENCE_PANEL:
             saved_all.extend(
@@ -2691,6 +2708,7 @@ def create_centrality_workflow(input_file: str | Path, output_root: str | Path):
 
     EXPORT_MATRIX_LONG = True
     EXPORT_FIGURES = True
+    EXPORT_GROUPED_RADAR_PLOTS = False
 
     # --------------------------------------------------
     # Figure styling
@@ -4236,14 +4254,15 @@ def create_centrality_workflow(input_file: str | Path, output_root: str | Path):
             )
             print("Saved:", OUTPUT_DIR / "radar_bar_overall.tiff")
 
-            make_grouped_radar_bar_5x2_plots(
-                long_df=long_df,
-                mean_df=mean_metric_df,
-                available_nodes=available_nodes,
-                output_dir=OUTPUT_DIR,
-                metrics=CENTRALITY_METRICS,
-            )
-            print("Saved grouped radar-bar plots in:", OUTPUT_DIR)
+            if EXPORT_GROUPED_RADAR_PLOTS:
+                make_grouped_radar_bar_5x2_plots(
+                    long_df=long_df,
+                    mean_df=mean_metric_df,
+                    available_nodes=available_nodes,
+                    output_dir=OUTPUT_DIR,
+                    metrics=CENTRALITY_METRICS,
+                )
+                print("Saved grouped radar-bar plots in:", OUTPUT_DIR)
 
         print("\nFinished. All outputs are in:", OUTPUT_DIR)
 
@@ -5417,10 +5436,13 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
 
     Outputs
     -------
-    Fig. 1 : sensitivity_outputs/Fig1.tiff and panel summary tables
-    Fig. 2 : centrality_output/Fig2.tiff
-    Fig. 3 : matrix_output/Fig3.tiff and matrix_output/delta_std_ranking.csv
-    Fig. 4 : sensitivity_outputs/Fig4.tiff and variance-decomposition tables
+    Fig. 1 : alternative networks and node-level centrality sensitivity.
+    Fig. 2 : Delta matrices and ranked pathway uncertainty.
+    Fig. 3 : groundwater-routing structure, node sensitivity, and variance attribution.
+    Fig. 4 : catchment-scale alphaGW map and a separate distribution panel.
+
+    The four ordered manuscript figures are written to ``main_figures``. The
+    supplementary-figure workflows and their existing output files are unchanged.
     """
 
     import importlib.util
@@ -5469,6 +5491,12 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         for text_artist in fig.findobj(match=Text):
             text_artist.set_fontfamily(FIGURE_FONT_FAMILY)
 
+
+    def _scale_figure_fonts(fig, factor: float) -> None:
+        """Scale every text artist in a completed figure by one factor."""
+        for text_artist in fig.findobj(match=Text):
+            text_artist.set_fontsize(text_artist.get_fontsize() * factor)
+
     # =============================================================================
     # Global switches
     # =============================================================================
@@ -5485,7 +5513,7 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
     # Shared configuration
     # =============================================================================
     NETWORK_ORDER = [
-        "SS-85", "Ab-19", "OK-06", "Tr-14", "Wr-13", "AD-23",
+        "SS-85", "Ab-19", "OK-06", "Wr-13", "Tr-14", "AD-23"
     ]
 
     DATASET_ORDER = ["Obs", "Mixed-GLEAM", "GLDAS", "ERA5"]
@@ -5506,6 +5534,53 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
     INPUT_WORKBOOK = Path(input_file)
     SHEET_NAME = "Network matrices"
     SENSITIVITY_OUTPUT_DIR = Path(output_root) / "sensitivity_outputs"
+    MAIN_FIGURE_DIR = Path(output_root) / "main_figures"
+    CENTRALITY_OUTPUT_DIR = Path(output_root) / "centrality_output"
+
+    REVISED_FIG1_OUTPUT = MAIN_FIGURE_DIR / "Fig1.tiff"
+    REVISED_FIG2_OUTPUT = MAIN_FIGURE_DIR / "Fig2.tiff"
+    REVISED_FIG2_RANKING_TABLE = MAIN_FIGURE_DIR / "Fig2_delta_std_ranking.csv"
+    SUPP_FIG2G_EXCL_SS85_OUTPUT = CENTRALITY_OUTPUT_DIR / "FigS_delta_std_ranking_excluding_SS85.tiff"
+    SUPP_FIG2G_EXCL_SS85_TABLE = CENTRALITY_OUTPUT_DIR / "FigS_delta_std_ranking_excluding_SS85.csv"
+    REVISED_FIG3_OUTPUT = MAIN_FIGURE_DIR / "Fig3.tiff"
+    REVISED_FIG3_SLOPE_TABLE = MAIN_FIGURE_DIR / "Fig3_panelB_slopes.csv"
+    REVISED_FIG4_OUTPUT = MAIN_FIGURE_DIR / "Fig4.tiff"
+    REVISED_FIG4_SUMMARY_TABLE = MAIN_FIGURE_DIR / "Fig4_panelB_summary.csv"
+    REVISED_FIG4_IMPLIED_TABLE = MAIN_FIGURE_DIR / "Fig4_implied_alphaGW.csv"
+    REVISED_FIG4_CAPTION_NOTE = MAIN_FIGURE_DIR / "Fig4_caption_note.txt"
+
+    INDEPENDENT_ALPHA_GW_MEAN = 0.59
+    INDEPENDENT_ALPHA_GW_UNCERTAINTY = 0.07
+    OBS_ALPHA_GW_LOWER = INDEPENDENT_ALPHA_GW_MEAN - INDEPENDENT_ALPHA_GW_UNCERTAINTY
+    OBS_ALPHA_GW_UPPER = INDEPENDENT_ALPHA_GW_MEAN + INDEPENDENT_ALPHA_GW_UNCERTAINTY
+    OBS_ALPHA_GW_BAND_COLOR = "#f4a261"
+    OBS_ALPHA_GW_BAND_ALPHA = 0.20
+    NON_ANTARCTIC_LAND_AREA_KM2 = 134_900_000.0
+
+    FIG4_FIGSIZE = (11.8, 9.0)
+    FIG4_OUTER_HEIGHT_RATIOS = [1.0, 1.0]
+    FIG4_OUTER_HSPACE = 0.30
+    FIG4_FONT_SCALE = 1.28
+
+    FIG4_CAPTION_NOTE = (
+        "Fig. 4 | Catchment-scale groundwater contributions constrain their representation "
+        "in global water-cycle assessments. a, Global distribution of the relative groundwater "
+        "contribution to surface-water runoff across {n_units:,} evaluated, non-overlapping "
+        "catchment units, expressed as Rgw0/Ravg (equivalent to αGW in this study). In ref. 16, "
+        "Rgw0/Ravg denotes the mean relative groundwater contribution to surface-water runoff "
+        "under zero monthly precipitation (Supplementary Fig. S5 of ref. 16). The mapped units "
+        "cover {mapped_area_million:.2f} million km², or approximately {land_fraction_pct:.1f}% "
+        "of global non-Antarctic land area (134.9 million km²). b, Comparison of implied global "
+        "αGW values from six water-cycle assessments with observation-based estimates. Implied "
+        "αGW is the assessed GW→SW flux divided by total runoff SW→SEA. Filled circles denote "
+        "defined values, including Tr-14 at αGW = 0; open circles indicate αGW undefined "
+        "(groundwater not linked to surface water; Ab-19 and Wr-13). The box and density summarize "
+        "the area-weighted distribution across the {n_units:,} evaluated catchment units. The "
+        "dashed purple connector indicates that the AD-23 value (αGW = 0.58) is the rounded "
+        "area-weighted mean (0.583) of these catchment-scale values. The orange point and error "
+        "bar show the independent observation-based estimate of 0.59 ± 0.07, and the corresponding "
+        "0.52–0.66 interval is shaded."
+    )
 
 
     # =============================================================================
@@ -5718,6 +5793,7 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
     FIG2_NODE_ORDER = ["Aw", "VEG", "SM", "GW", "SW", "SP/ENG", "SEA", "GL"]
     FIG2_FOCUS_NODES = ["Aw", "SM", "GW", "SW", "SP/ENG"]
     FIG2_RADAR_COLORS = ["#4C78A8", "#F58518", "#54A24B", "#E45756", "#72B7B2", "#B279A2"]
+    ASSESSMENT_COLORS = dict(zip(NETWORK_ORDER, FIG2_RADAR_COLORS))
 
 
     def FIG2_load_metrics_long(excel_path: Path) -> pd.DataFrame:
@@ -5928,6 +6004,7 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         focus_nodes: Sequence[str] = FIG2_FOCUS_NODES,
         output_path: Path = FIG2_OUTPUT_FIG,
         reference_network_fig: Path = FIG2_REFERENCE_NETWORK_FIG,
+        figure_label: str = "Fig. 2",
     ):
         """
         Create Fig. 2.
@@ -5962,7 +6039,7 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
             ax_ref,
             reference_fig_path=reference_network_fig,
         )
-        print(f"Fig. 2 panel A inserted from: {used_reference_fig}")
+        print(f"{figure_label} panel A inserted from: {used_reference_fig}")
 
         # ------------------------------------------------------------------
         # Panel B: heatmap at lower-left
@@ -6311,7 +6388,14 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         return im
 
 
-    def plot_delta_ranking_bar(ax, std_df: pd.DataFrame, top_n: int = FIG3_TOP_N):
+    def plot_delta_ranking_bar(
+        ax,
+        std_df: pd.DataFrame,
+        top_n: int = FIG3_TOP_N,
+        network_count: int = 6,
+        ranking_note: Optional[str] = None,
+        panel_label: Optional[str] = "g",
+    ):
         """Plot the top uncertain pathways by standard deviation of Delta."""
         rank_df = std_df.head(top_n).copy() if top_n is not None else std_df.copy()
         rank_df = rank_df.iloc[::-1]
@@ -6331,9 +6415,30 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
                 tick_label.set_fontweight("bold")
 
         ax.tick_params(axis="x", labelsize=12)
-        ax.set_xlabel(r"SD of $\Delta$ across 6 networks", fontsize=15)
+        ax.set_xlabel(rf"SD of $\Delta$ across {network_count} networks", fontsize=15)
         ax.grid(axis="x", alpha=0.3)
-        ax.text(0.02, 1.12, "g", transform=ax.transAxes, fontsize=16, fontweight="bold", va="top", ha="right")
+        if panel_label:
+            ax.text(
+                0.02,
+                1.12,
+                panel_label,
+                transform=ax.transAxes,
+                fontsize=16,
+                fontweight="bold",
+                va="top",
+                ha="right",
+            )
+        if ranking_note:
+            ax.text(
+                0.5,
+                1.06,
+                ranking_note,
+                transform=ax.transAxes,
+                ha="center",
+                va="bottom",
+                fontsize=11.5,
+                fontstyle="italic",
+            )
 
         x_offset = 0.01 * max(rank_df["std_value"].max(), 1.0)
 
@@ -6349,6 +6454,8 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         figsize: Tuple[float, float] = FIG3_FIGSIZE,
         dpi: int = DPI,
         annot_fontsize: float = FIG3_ANNOT_FONTSIZE,
+        ranking_network_count: Optional[int] = None,
+        ranking_note: Optional[str] = None,
     ):
         """Create the 3-row figure: six heatmaps plus one STD-ranking bar plot."""
         output_fig = ensure_parent(output_fig)
@@ -6391,7 +6498,15 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         cbar.set_label(r"$\Delta$ value", fontsize=14)
 
         ax_bar = fig.add_subplot(gs[2, :])
-        plot_delta_ranking_bar(ax_bar, std_df, top_n=top_n)
+        if ranking_network_count is None:
+            ranking_network_count = len(delta_mats)
+        plot_delta_ranking_bar(
+            ax_bar,
+            std_df,
+            top_n=top_n,
+            network_count=ranking_network_count,
+            ranking_note=ranking_note,
+        )
 
         save_figure_both(fig, output_fig, dpi=dpi, bbox_inches="tight")
         plt.close(fig)
@@ -6399,6 +6514,36 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         if output_csv is not None:
             std_df.to_csv(output_csv, index=False)
 
+        return output_fig, output_csv
+
+
+    def plot_delta_ranking_supplement(
+        std_df: pd.DataFrame,
+        output_fig: Path = SUPP_FIG2G_EXCL_SS85_OUTPUT,
+        output_csv: Optional[Path] = SUPP_FIG2G_EXCL_SS85_TABLE,
+        top_n: int = FIG3_TOP_N,
+        network_count: int = 5,
+    ):
+        """Export the SS-85-excluded SD ranking as a standalone supplementary figure."""
+        output_fig = ensure_parent(output_fig)
+        if output_csv is not None:
+            output_csv = ensure_parent(output_csv)
+
+        fig, ax = plt.subplots(figsize=(8.6, 5.6), dpi=DPI)
+        plot_delta_ranking_bar(
+            ax,
+            std_df,
+            top_n=top_n,
+            network_count=network_count,
+            ranking_note=None,
+            panel_label=None,
+        )
+        fig.subplots_adjust(left=0.20, right=0.97, top=0.97, bottom=0.14)
+        save_figure_both(fig, output_fig, dpi=DPI, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
+
+        if output_csv is not None:
+            std_df.to_csv(output_csv, index=False)
         return output_fig, output_csv
 
 
@@ -6976,6 +7121,417 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         return inset
 
 
+    def plot_rgw0_distribution_panel(
+        ax,
+        valid_gdf,
+        value_col: str = "rgw0_map",
+        area_col: str = "fragment_area_km2",
+        independent_mean: float = INDEPENDENT_ALPHA_GW_MEAN,
+        independent_uncertainty: float = INDEPENDENT_ALPHA_GW_UNCERTAINTY,
+    ):
+        """Plot the catchment distribution and an independent global estimate."""
+        from scipy.stats import gaussian_kde
+
+        values = pd.to_numeric(valid_gdf[value_col], errors="coerce").to_numpy(dtype=float)
+        areas = pd.to_numeric(valid_gdf[area_col], errors="coerce").to_numpy(dtype=float)
+        mask = np.isfinite(values) & np.isfinite(areas) & (areas > 0)
+        values = values[mask]
+        areas = areas[mask]
+        if values.size == 0:
+            raise ValueError("No valid catchment alphaGW values are available for Fig. 4b.")
+
+        weights = areas / areas.sum()
+        weighted_mean = float(np.sum(values * weights))
+        q25, q50, q75 = weighted_quantile(values, [0.25, 0.50, 0.75], sample_weight=areas)
+
+        ax.axhspan(
+            OBS_ALPHA_GW_LOWER,
+            OBS_ALPHA_GW_UPPER,
+            facecolor=OBS_ALPHA_GW_BAND_COLOR,
+            alpha=OBS_ALPHA_GW_BAND_ALPHA,
+            edgecolor="none",
+            zorder=0,
+        )
+
+        y_grid = np.linspace(FIG1_VALID_MIN, FIG1_VALID_MAX, 400)
+        density = gaussian_kde(values, weights=weights, bw_method="scott")(y_grid)
+        density = density / density.max() * 0.38
+
+        box_x = 0.18
+        estimate_x = 0.36
+        violin_x = 0.53
+        ax.fill_betweenx(
+            y_grid,
+            violin_x,
+            violin_x + density,
+            facecolor="#6baed6",
+            edgecolor="#1a355f",
+            linewidth=1.35,
+            alpha=0.70,
+            zorder=2,
+        )
+
+        box_width = 0.13
+        ax.add_patch(
+            patches.Rectangle(
+                (box_x - box_width / 2, q25),
+                box_width,
+                q75 - q25,
+                facecolor="white",
+                edgecolor="#08306b",
+                linewidth=1.5,
+                zorder=4,
+            )
+        )
+        ax.plot(
+            [box_x - box_width / 2, box_x + box_width / 2],
+            [q50, q50],
+            color="#08306b",
+            linewidth=2.0,
+            zorder=5,
+        )
+        whisker_low = float(values.min())
+        whisker_high = float(values.max())
+        ax.plot([box_x, box_x], [whisker_low, q25], color="#08306b", linewidth=1.2, zorder=3)
+        ax.plot([box_x, box_x], [q75, whisker_high], color="#08306b", linewidth=1.2, zorder=3)
+        cap_half_width = box_width * 0.42
+        ax.plot([box_x - cap_half_width, box_x + cap_half_width], [whisker_low, whisker_low], color="#08306b", linewidth=1.2, zorder=3)
+        ax.plot([box_x - cap_half_width, box_x + cap_half_width], [whisker_high, whisker_high], color="#08306b", linewidth=1.2, zorder=3)
+
+        independent_lower = independent_mean - independent_uncertainty
+        independent_upper = independent_mean + independent_uncertainty
+        ax.errorbar(
+            [estimate_x],
+            [independent_mean],
+            yerr=[[independent_uncertainty], [independent_uncertainty]],
+            fmt="o",
+            markersize=4.8,
+            color="#d95f02",
+            ecolor="#d95f02",
+            elinewidth=1.4,
+            capsize=3.5,
+            capthick=1.2,
+            zorder=6,
+        )
+        ax.text(
+            estimate_x,
+            independent_mean + independent_uncertainty + 0.025,
+            r"$0.59 \pm 0.07$",
+            color="#d95f02",
+            fontsize=8.3,
+            fontweight="normal",
+            ha="center",
+            va="bottom",
+            zorder=7,
+        )
+        ax.set_xlim(0.06, 0.98)
+        ax.set_ylim(FIG1_VALID_MIN, FIG1_VALID_MAX)
+        ax.set_ylabel("")
+        ax.set_xticks([])
+        ax.set_yticks([0.00, 0.25, 0.50, 0.75, 1.00])
+        ax.tick_params(axis="y", labelsize=10.5, width=1.0)
+        ax.set_facecolor("#eef7fb")
+        ax.grid(axis="y", color="white", linestyle="-", linewidth=0.8, alpha=0.85)
+        for spine in ["top", "right"]:
+            ax.spines[spine].set_visible(False)
+        ax.spines["left"].set_linewidth(1.0)
+        ax.spines["bottom"].set_linewidth(1.0)
+
+        return {
+            "area_weighted_mean": weighted_mean,
+            "weighted_q25": float(q25),
+            "weighted_median": float(q50),
+            "weighted_q75": float(q75),
+            "independent_mean": float(independent_mean),
+            "independent_uncertainty": float(independent_uncertainty),
+            "independent_lower": float(independent_lower),
+            "independent_upper": float(independent_upper),
+        }
+
+
+    def load_implied_alpha_gw_values(workbook: Path = INPUT_WORKBOOK) -> pd.DataFrame:
+        """Derive assessment-level implied alphaGW values from the reference matrices."""
+        raw = pd.read_excel(workbook, sheet_name=SHEET_NAME, header=None, engine="openpyxl")
+        blocks = []
+        for row in range(raw.shape[0]):
+            for col in range(raw.shape[1]):
+                title = str(raw.iat[row, col]).strip()
+                if "RELATION MATRIX" in title.upper():
+                    assessment = next((name for name in NETWORK_ORDER if name in title), None)
+                    if assessment is not None:
+                        blocks.append((assessment, row, max(col - 1, 0)))
+
+        block_by_assessment = {assessment: (row, col) for assessment, row, col in blocks}
+        missing = [name for name in NETWORK_ORDER if name not in block_by_assessment]
+        if missing:
+            raise ValueError(f"Reference relation matrices missing for: {missing}")
+
+        records = []
+        for assessment in NETWORK_ORDER:
+            start_row, start_col = block_by_assessment[assessment]
+            node_row = start_row + 3
+            data_row = start_row + 4
+            col0 = start_col + 2
+            nodes = [str(value).strip() for value in raw.iloc[node_row, col0 : col0 + 8].tolist()]
+            matrix = raw.iloc[data_row : data_row + 8, col0 : col0 + 8].copy()
+            matrix = matrix.apply(pd.to_numeric, errors="coerce").fillna(0.0)
+            matrix.index = nodes
+            matrix.columns = nodes
+
+            gw_to_sw = float(matrix.loc["GW", "SW"])
+            total_runoff = float(matrix.loc["SW", "SEA"])
+            represented = bool(gw_to_sw > EPS and total_runoff > EPS)
+            alpha_gw_assessed = assessment not in {"Ab-19", "Wr-13"}
+            implied = gw_to_sw / total_runoff if alpha_gw_assessed and total_runoff > EPS else 0.0
+            records.append(
+                {
+                    "assessment": assessment,
+                    "gw_to_sw": gw_to_sw,
+                    "total_runoff_sw_to_sea": total_runoff,
+                    "implied_alpha_gw": implied,
+                    "gw_to_sw_represented": represented,
+                    "alpha_gw_assessed": alpha_gw_assessed,
+                }
+            )
+
+        return pd.DataFrame.from_records(records)
+
+
+    def plot_implied_alpha_gw_assessments(ax, implied_df: pd.DataFrame) -> None:
+        """Plot the six implied assessment values on the Fig. 4 shared alphaGW axis."""
+        ordered = implied_df.set_index("assessment").loc[NETWORK_ORDER].reset_index()
+        x_values = np.arange(len(ordered), dtype=float)
+
+        ax.axhspan(
+            OBS_ALPHA_GW_LOWER,
+            OBS_ALPHA_GW_UPPER,
+            facecolor=OBS_ALPHA_GW_BAND_COLOR,
+            alpha=OBS_ALPHA_GW_BAND_ALPHA,
+            edgecolor="none",
+            zorder=0,
+        )
+        for x, row in zip(x_values, ordered.itertuples(index=False)):
+            assessment_color = ASSESSMENT_COLORS[row.assessment]
+            face_color = assessment_color if row.alpha_gw_assessed else "white"
+            ax.scatter(
+                x,
+                row.implied_alpha_gw,
+                s=88,
+                marker="o",
+                facecolor=face_color,
+                edgecolor=assessment_color,
+                linewidth=1.8,
+                clip_on=False,
+                zorder=4,
+            )
+            label_y = row.implied_alpha_gw + (0.045 if row.implied_alpha_gw < 0.92 else -0.07)
+            va = "bottom" if row.implied_alpha_gw < 0.92 else "top"
+            label = (
+                "0" if row.alpha_gw_assessed and abs(row.implied_alpha_gw) <= EPS
+                else f"{row.implied_alpha_gw:.2f}" if row.alpha_gw_assessed
+                else "undefined"
+            )
+            ax.text(x, label_y, label, ha="center", va=va, fontsize=10.0, color=assessment_color)
+
+        ax.set_xlim(-0.65, len(ordered) - 0.35)
+        ax.set_ylim(FIG1_VALID_MIN, FIG1_VALID_MAX)
+        ax.set_xticks(x_values)
+        ax.set_xticklabels(ordered["assessment"], rotation=45, ha="right", fontsize=8.5)
+        ax.set_yticks([0.00, 0.25, 0.50, 0.75, 1.00])
+        ax.set_ylabel(r"$\alpha_{GW}$", fontsize=13, labelpad=5)
+        ax.set_title("Global assessments", fontsize=10.1, pad=8)
+        ax.tick_params(axis="y", labelsize=10.5, width=1.0)
+        ax.tick_params(axis="x", length=0, pad=2)
+        ax.set_facecolor("#eef7fb")
+        ax.grid(axis="y", color="white", linestyle="-", linewidth=0.8, alpha=0.85)
+        for spine in ["top", "right"]:
+            ax.spines[spine].set_visible(False)
+
+
+    def plot_combined_alpha_gw_panel(
+        ax,
+        valid_gdf,
+        implied_df: pd.DataFrame,
+        value_col="rgw0_map",
+        area_col="fragment_area_km2",
+        independent_mean=INDEPENDENT_ALPHA_GW_MEAN,
+        independent_uncertainty=INDEPENDENT_ALPHA_GW_UNCERTAINTY,
+    ):
+        """Plot assessments and independent estimates together as one Fig. 4b axis."""
+        from scipy.stats import gaussian_kde
+
+        ordered = implied_df.set_index("assessment").loc[NETWORK_ORDER].reset_index()
+        assessment_x = np.arange(len(ordered), dtype=float)
+
+        values = pd.to_numeric(valid_gdf[value_col], errors="coerce").to_numpy(dtype=float)
+        areas = pd.to_numeric(valid_gdf[area_col], errors="coerce").to_numpy(dtype=float)
+        mask = np.isfinite(values) & np.isfinite(areas) & (areas > 0)
+        values = values[mask]
+        areas = areas[mask]
+        if values.size == 0:
+            raise ValueError("No valid catchment alphaGW values are available for Fig. 4b.")
+
+        weights = areas / areas.sum()
+        weighted_mean = float(np.sum(values * weights))
+        q25, q50, q75 = weighted_quantile(values, [0.25, 0.50, 0.75], sample_weight=areas)
+
+        ax.axhspan(
+            OBS_ALPHA_GW_LOWER,
+            OBS_ALPHA_GW_UPPER,
+            facecolor=OBS_ALPHA_GW_BAND_COLOR,
+            alpha=OBS_ALPHA_GW_BAND_ALPHA,
+            edgecolor="none",
+            zorder=0,
+        )
+
+        for x, row in zip(assessment_x, ordered.itertuples(index=False)):
+            assessment_color = ASSESSMENT_COLORS[row.assessment]
+            face_color = assessment_color if row.alpha_gw_assessed else "white"
+            ax.scatter(
+                x,
+                row.implied_alpha_gw,
+                s=88,
+                marker="o",
+                facecolor=face_color,
+                edgecolor=assessment_color,
+                linewidth=1.8,
+                clip_on=False,
+                zorder=5,
+            )
+            label_y = row.implied_alpha_gw + (0.045 if row.implied_alpha_gw < 0.92 else -0.07)
+            va = "bottom" if row.implied_alpha_gw < 0.92 else "top"
+            label = (
+                "0" if row.alpha_gw_assessed and abs(row.implied_alpha_gw) <= EPS
+                else f"{row.implied_alpha_gw:.2f}" if row.alpha_gw_assessed
+                else "undefined"
+            )
+            ax.text(x, label_y, label, ha="center", va=va, fontsize=8.3, color=assessment_color)
+
+        separator_x = 6.05
+        box_x = 6.55
+        estimate_x = 7.35
+        violin_x = 7.95
+        ax.axvline(separator_x, color="white", linewidth=2.0, zorder=1)
+
+        y_grid = np.linspace(FIG1_VALID_MIN, FIG1_VALID_MAX, 400)
+        density = gaussian_kde(values, weights=weights, bw_method="scott")(y_grid)
+        density = density / density.max() * 0.72
+        ax.fill_betweenx(
+            y_grid,
+            violin_x,
+            violin_x + density,
+            facecolor="#6baed6",
+            edgecolor="#1a355f",
+            linewidth=1.35,
+            alpha=0.70,
+            zorder=2,
+        )
+
+        box_width = 0.38
+        ax.add_patch(
+            patches.Rectangle(
+                (box_x - box_width / 2, q25),
+                box_width,
+                q75 - q25,
+                facecolor="white",
+                edgecolor="#08306b",
+                linewidth=1.5,
+                zorder=4,
+            )
+        )
+        ax.plot([box_x - box_width / 2, box_x + box_width / 2], [q50, q50], color="#08306b", linewidth=2.0, zorder=5)
+        whisker_low = float(values.min())
+        whisker_high = float(values.max())
+        ax.plot([box_x, box_x], [whisker_low, q25], color="#08306b", linewidth=1.2, zorder=3)
+        ax.plot([box_x, box_x], [q75, whisker_high], color="#08306b", linewidth=1.2, zorder=3)
+        cap_half_width = box_width * 0.42
+        ax.plot([box_x - cap_half_width, box_x + cap_half_width], [whisker_low, whisker_low], color="#08306b", linewidth=1.2, zorder=3)
+        ax.plot([box_x - cap_half_width, box_x + cap_half_width], [whisker_high, whisker_high], color="#08306b", linewidth=1.2, zorder=3)
+
+        # AD-23 is the rounded area-weighted aggregation of the catchment-scale
+        # distribution. Point the connector toward AD-23 to show the direction of
+        # aggregation without linking it to the independent orange estimate.
+        ad23_position = int(np.flatnonzero(ordered["assessment"].to_numpy() == "AD-23")[0])
+        ad23_x = float(assessment_x[ad23_position])
+        ad23_y = float(ordered.loc[ad23_position, "implied_alpha_gw"])
+        aggregation_color = ASSESSMENT_COLORS["AD-23"]
+        aggregation_arrow = patches.FancyArrowPatch(
+            (box_x - box_width / 2 - 0.03, weighted_mean + 0.01),
+            (ad23_x + 0.12, ad23_y + 0.005),
+            connectionstyle="arc3,rad=0.24",
+            arrowstyle="-|>",
+            mutation_scale=10.5,
+            linewidth=1.25,
+            linestyle=(0, (3, 2)),
+            color=aggregation_color,
+            alpha=0.90,
+            clip_on=False,
+            zorder=6,
+        )
+        ax.add_patch(aggregation_arrow)
+        ax.text(
+            (box_x + ad23_x) / 2 + 0.03,
+            max(weighted_mean, ad23_y) + 0.105,
+            "Area-weighted\naggregation",
+            ha="center",
+            va="bottom",
+            fontsize=8.4,
+            color=aggregation_color,
+            linespacing=0.92,
+            zorder=7,
+        )
+
+        ax.errorbar(
+            [estimate_x],
+            [independent_mean],
+            yerr=[[independent_uncertainty], [independent_uncertainty]],
+            fmt="o",
+            markersize=4.8,
+            color="#d95f02",
+            ecolor="#d95f02",
+            elinewidth=1.4,
+            capsize=3.5,
+            capthick=1.2,
+            zorder=6,
+        )
+        ax.text(
+            estimate_x,
+            independent_mean + independent_uncertainty + 0.025,
+            r"$0.59 \pm 0.07$",
+            color="#d95f02",
+            fontsize=10.5,
+            fontweight="bold",
+            ha="center",
+            va="bottom",
+            zorder=7,
+        )
+        ax.text(2.5, 1.035, "Groundwater contribution assessments", transform=ax.get_xaxis_transform(), ha="center", va="bottom", fontsize=12.0)
+        ax.text(7.45, 1.035, "Cross-scale observational estimate", transform=ax.get_xaxis_transform(), ha="center", va="bottom", fontsize=12.0)
+        ax.set_xlim(-0.65, 8.95)
+        ax.set_ylim(FIG1_VALID_MIN, FIG1_VALID_MAX)
+        ax.set_xticks(assessment_x)
+        ax.set_xticklabels(ordered["assessment"], rotation=0, ha="center", fontsize=10.5)
+        ax.set_yticks([0.00, 0.25, 0.50, 0.75, 1.00])
+        ax.set_ylabel(r"$\alpha_{GW}$", fontsize=15, labelpad=7)
+        ax.tick_params(axis="y", labelsize=12.0, width=1.0)
+        ax.tick_params(axis="x", length=0, pad=7)
+        ax.set_facecolor("#eef7fb")
+        ax.grid(axis="y", color="white", linestyle="-", linewidth=0.8, alpha=0.85)
+        for spine in ["top", "right"]:
+            ax.spines[spine].set_visible(False)
+
+        return {
+            "area_weighted_mean": weighted_mean,
+            "weighted_q25": float(q25),
+            "weighted_median": float(q50),
+            "weighted_q75": float(q75),
+            "independent_mean": float(independent_mean),
+            "independent_uncertainty": float(independent_uncertainty),
+            "independent_lower": float(independent_mean - independent_uncertainty),
+            "independent_upper": float(independent_mean + independent_uncertainty),
+        }
+
+
     # =============================================================================
     # Fig. 1 Obs structural network inset
     # =============================================================================
@@ -7048,7 +7604,7 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
             )
 
 
-    def plot_obs_structure_network_panel(ax):
+    def plot_obs_structure_network_panel(ax, style_scale: float = 1.0):
         """
         Plot the value-free Obs network structure as an independent Fig. 1 panel.
 
@@ -7173,6 +7729,12 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         for node in ["SP/ENG", "SM", "Aw", "VEG", "GW", "SW", "SEA"]:
             _draw_network_node(ax, pos[node], node, colors[node], faces[node])
 
+        if style_scale != 1.0:
+            for text_artist in ax.texts:
+                text_artist.set_fontsize(text_artist.get_fontsize() * style_scale)
+            for patch_artist in ax.patches:
+                patch_artist.set_linewidth(patch_artist.get_linewidth() * style_scale)
+
         return ax
 
 
@@ -7184,7 +7746,15 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
     # =============================================================================
     # Map plot
     # =============================================================================
-    def plot_rgw0_world_map(fig, ax, all_gdf, valid_gdf, invalid_gdf):
+    def plot_rgw0_world_map(
+        fig,
+        ax,
+        all_gdf,
+        valid_gdf,
+        invalid_gdf,
+        include_distribution: bool = True,
+        colorbar_side: str = "right",
+    ):
         """
         Plot Fig. 1A: Rgw0 world map.
         Valid catchments are colored by Rgw0.
@@ -7266,11 +7836,32 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         )
         sm.set_array([])
 
-        cbar = fig.colorbar(sm, ax=ax, fraction=0.018, pad=0.012)
-        cbar.set_label(r"$\alpha_{GW}$", fontsize=15)
+        if colorbar_side not in {"left", "right", "inset"}:
+            raise ValueError("colorbar_side must be 'left', 'right', or 'inset'.")
+        if colorbar_side == "inset":
+            cbar_ax = ax.inset_axes([0.025, 0.12, 0.018, 0.58])
+            cbar = fig.colorbar(sm, cax=cbar_ax)
+            cbar.ax.set_title(r"$\alpha_{GW}$", fontsize=12, pad=5)
+            cbar.ax.yaxis.set_ticks_position("right")
+        else:
+            colorbar_pad = 0.100 if colorbar_side == "left" else 0.012
+            cbar = fig.colorbar(
+                sm,
+                ax=ax,
+                location=colorbar_side,
+                fraction=0.018,
+                pad=colorbar_pad,
+            )
+        if colorbar_side == "left":
+            cbar.ax.yaxis.set_ticks_position("left")
+            cbar.ax.yaxis.set_label_position("left")
+            cbar.set_label(r"$\alpha_{GW}$", fontsize=13, rotation=90, labelpad=9)
+        elif colorbar_side == "right":
+            cbar.ax.set_title(r"$\alpha_{GW}$", fontsize=15, pad=7)
         cbar.ax.tick_params(labelsize=12)
 
-        add_rgw0_distribution_inset(ax, valid_gdf, bounds=FIG1_RGW0_DIST_INSET_BOUNDS)
+        if include_distribution:
+            add_rgw0_distribution_inset(ax, valid_gdf, bounds=FIG1_RGW0_DIST_INSET_BOUNDS)
 
 
 
@@ -7830,7 +8421,15 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         return df
 
 
-    def stacked_barh(ax, df: pd.DataFrame, label_col: str, title: str = ""):
+    def stacked_barh(
+        ax,
+        df: pd.DataFrame,
+        label_col: str,
+        title: str = "",
+        label_fontsize: float = 14.5,
+        axis_fontsize: float = 15,
+        tick_fontsize: float = 14,
+    ):
         """Horizontal stacked bar plot for variance components."""
         plot_df = df.copy()
         y = np.arange(len(plot_df))
@@ -7843,32 +8442,22 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         ax.barh(y, dataset, left=alpha + interaction, color=BAR_COLORS["dataset"], label=r"$SS_{dataset}$")
 
         ax.set_yticks(y)
-        ax.set_yticklabels(plot_df[label_col], fontsize=14.5)
+        ax.set_yticklabels(plot_df[label_col], fontsize=label_fontsize)
         ax.set_xlim(0, 1)
-        ax.set_xlabel("Fraction of total variance", fontsize=15)
+        ax.set_xlabel("Fraction of total variance", fontsize=axis_fontsize)
         ax.set_title(title, fontsize=16, fontweight="bold")
-        ax.tick_params(axis="x", labelsize=14)
-        ax.tick_params(axis="y", labelsize=14.5)
+        ax.tick_params(axis="x", labelsize=tick_fontsize)
+        ax.tick_params(axis="y", labelsize=label_fontsize)
         ax.grid(axis="x", alpha=0.25, linestyle="--", linewidth=0.5)
 
         for spine in ["top", "right"]:
             ax.spines[spine].set_visible(False)
 
 
-    def plot_fig4(output_fig: Path = FIG4_OUTPUT_FIG):
-        """
-        Generate Fig. 4 with two panels.
-
-        Panel A: top node metrics by alphaGW response share.
-        Panel B: top SM-, GW-, and SW-related delta pathways, excluding self-links.
-        """
-        output_fig = ensure_parent(output_fig)
-
-        node_df = pd.read_csv(OUT_NODE_METRICS_SS)
-        delta_df = pd.read_csv(OUT_DELTA_PATHWAYS_SS)
-
-        node_df = ensure_variance_shares(node_df)
-        delta_df = ensure_variance_shares(delta_df)
+    def build_variance_panel_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Return the ranked node and pathway tables used in Fig. 3c-d."""
+        node_df = ensure_variance_shares(pd.read_csv(OUT_NODE_METRICS_SS))
+        delta_df = ensure_variance_shares(pd.read_csv(OUT_DELTA_PATHWAYS_SS))
 
         node_panel = node_df[
             node_df["Node"].isin(FIG4_NODE_ORDER)
@@ -7885,6 +8474,19 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
         top_delta = delta_panel.sort_values("alphaGW_response_share", ascending=False).head(FIG4_TOP_N).copy()
         top_delta["Label"] = top_delta["Pathway"]
         top_delta = top_delta.iloc[::-1]
+        return top_node, top_delta
+
+
+    def plot_fig4(output_fig: Path = FIG4_OUTPUT_FIG):
+        """
+        Generate Fig. 4 with two panels.
+
+        Panel A: top node metrics by alphaGW response share.
+        Panel B: top SM-, GW-, and SW-related delta pathways, excluding self-links.
+        """
+        output_fig = ensure_parent(output_fig)
+
+        top_node, top_delta = build_variance_panel_data()
 
         fig = plt.figure(figsize=(13, 6), dpi=DPI)
         gs = GridSpec(nrows=1, ncols=2, width_ratios=[1, 1], wspace=0.4, figure=fig)
@@ -7923,30 +8525,395 @@ def create_main_figures_workflow(input_file: str | Path, output_root: str | Path
 
 
     # =============================================================================
+    # Revised manuscript figure assembly
+    # =============================================================================
+    def _add_routing_structure_and_sensitivity_panels(
+        fig,
+        network_spec,
+        sensitivity_spec,
+        long_df: pd.DataFrame,
+    ):
+        """Add revised Fig. 3a-b and return the created axes."""
+        ax_network = fig.add_subplot(network_spec)
+        plot_obs_structure_network_panel(ax_network, style_scale=1.16)
+
+        gs_b_wrap = sensitivity_spec.subgridspec(
+            5,
+            1,
+            height_ratios=[0.02, 1, 1, 1, 0.18],
+            hspace=0.0,
+        )
+        gs_b = gs_b_wrap[1:4, 0].subgridspec(
+            nrows=len(FIG1_PANEL_B_METRICS),
+            ncols=len(FIG1_FOCUS_NODES),
+            wspace=FIG1_PANEL_B_WSPACE,
+            hspace=FIG1_PANEL_B_HSPACE,
+        )
+        axes_b = np.empty((len(FIG1_PANEL_B_METRICS), len(FIG1_FOCUS_NODES)), dtype=object)
+
+        row_ylims = {}
+        for metric in FIG1_PANEL_B_METRICS:
+            values = []
+            for node in FIG1_FOCUS_NODES:
+                key = metric_key(metric, node)
+                sub = long_df[
+                    (long_df["Metric_Group"] == "Centrality")
+                    & (long_df["Metric"] == key)
+                    & (long_df["Dataset"].isin(DATASET_ORDER))
+                ]
+                values.extend(
+                    sub["Value"].replace([np.inf, -np.inf], np.nan).dropna().astype(float).tolist()
+                )
+            row_ylims[metric] = nice_ylim(values, force_zero=True)
+
+        for row_id, metric in enumerate(FIG1_PANEL_B_METRICS):
+            for col_id, node in enumerate(FIG1_FOCUS_NODES):
+                ax = fig.add_subplot(gs_b[row_id, col_id])
+                axes_b[row_id, col_id] = ax
+                key = metric_key(metric, node)
+
+                for dataset in DATASET_ORDER:
+                    sub = long_df[
+                        (long_df["Dataset"] == dataset)
+                        & (long_df["Metric_Group"] == "Centrality")
+                        & (long_df["Metric"] == key)
+                    ].copy()
+                    if sub.empty:
+                        continue
+                    sub = sub.sort_values(FIG1_X_COL)
+                    ax.plot(
+                        sub[FIG1_X_COL],
+                        sub["Value"],
+                        color=DATASET_COLORS.get(dataset),
+                        marker=DATASET_MARKERS.get(dataset, "o"),
+                        markersize=3.1,
+                        linewidth=1.35,
+                        label=dataset if (row_id == 0 and col_id == 0) else "_nolegend_",
+                        zorder=3,
+                    )
+
+                ax.set_xlim(0, 1)
+                ax.set_xticks([0, 0.5, 1.0])
+                ax.set_ylim(row_ylims[metric])
+                setup_clean_axis(ax)
+                if row_id == 0:
+                    ax.set_title(display_node_label(node), fontsize=11.0, fontweight="bold", pad=4)
+                if col_id == 0:
+                    ax.set_ylabel(metric, fontsize=11.5, labelpad=5)
+                else:
+                    ax.set_yticklabels([])
+                    ax.tick_params(axis="y", length=0)
+                if row_id == len(FIG1_PANEL_B_METRICS) - 1:
+                    ax.set_xlabel(FIG1_X_LABEL, fontsize=10.8)
+                else:
+                    ax.set_xticklabels([])
+                ax.tick_params(axis="both", labelsize=9.6, width=1.0)
+
+        return ax_network, axes_b
+
+
+    def _calculate_and_save_variance_outputs(long_df: pd.DataFrame, workflow):
+        """Calculate the variance tables used by revised Fig. 3c-d."""
+        analysis_df = filter_alpha_endpoints(long_df)
+        node_share = calculate_node_metric_variance_shares(analysis_df, workflow)
+        delta_share = calculate_delta_pathway_variance_shares(analysis_df, workflow)
+        node_wide, delta_wide = make_wide_tables(node_share, delta_share)
+        save_variance_outputs(node_share, delta_share, node_wide, delta_wide)
+        return build_variance_panel_data()
+
+
+    def run_revised_FIG1():
+        """Generate revised Fig. 1 from the network and centrality panels."""
+        df_long = FIG2_load_metrics_long(Path(FIG2_EXCEL_PATH))
+        panel_a_df = FIG2_build_panel_a_matrix(df_long)
+        panel_b_df = FIG2_build_panel_b_data(df_long)
+        output = make_FIG2(
+            panel_a_df=panel_a_df,
+            panel_b_df=panel_b_df,
+            output_path=REVISED_FIG1_OUTPUT,
+            figure_label="Fig. 1",
+        )
+        print(f"Fig. 1 saved to: {output}")
+        return output
+
+
+    def run_revised_FIG2():
+        """Generate main Fig. 2 and the SS-85-excluded supplementary SD ranking."""
+        delta_mats = load_delta_matrices(Path(FIG3_EXCEL_PATH))
+        std_df = compute_pathway_std(
+            delta_mats,
+            use_abs=False,
+            min_nonzero=FIG3_MIN_NONZERO,
+            ignore_diagonal=FIG3_IGNORE_DIAGONAL,
+        )
+        output_fig, output_csv = plot_delta_figure(
+            delta_mats,
+            std_df,
+            output_fig=REVISED_FIG2_OUTPUT,
+            output_csv=REVISED_FIG2_RANKING_TABLE,
+        )
+        print(f"Fig. 2 saved to: {output_fig}")
+        print(f"Fig. 2 ranking table saved to: {output_csv}")
+
+        supplementary_fig, supplementary_csv = run_supplementary_delta_ranking(delta_mats)
+        return (output_fig, output_csv), (supplementary_fig, supplementary_csv)
+
+
+    def run_supplementary_delta_ranking(delta_mats: Optional[Dict[str, pd.DataFrame]] = None):
+        """Generate Supplementary Fig. S7 without requiring the other main figures."""
+        if delta_mats is None:
+            delta_mats = load_delta_matrices(Path(FIG3_EXCEL_PATH))
+
+        reduced_mats = {name: matrix for name, matrix in delta_mats.items() if name != "SS-85"}
+        reduced_std_df = compute_pathway_std(
+            reduced_mats,
+            use_abs=False,
+            min_nonzero=FIG3_MIN_NONZERO,
+            ignore_diagonal=FIG3_IGNORE_DIAGONAL,
+        )
+        supplementary_fig, supplementary_csv = plot_delta_ranking_supplement(
+            reduced_std_df,
+            output_fig=SUPP_FIG2G_EXCL_SS85_OUTPUT,
+            output_csv=SUPP_FIG2G_EXCL_SS85_TABLE,
+            network_count=len(reduced_mats),
+        )
+        print(f"Supplementary SS-85-excluded SD ranking saved to: {supplementary_fig}")
+        print(f"Supplementary ranking table saved to: {supplementary_csv}")
+        return supplementary_fig, supplementary_csv
+
+
+    def plot_revised_FIG3(
+        long_df: pd.DataFrame,
+        top_node: pd.DataFrame,
+        top_delta: pd.DataFrame,
+        output_fig: Path = REVISED_FIG3_OUTPUT,
+    ):
+        """Combine routing panels with node and pathway variance attribution."""
+        output_fig = ensure_parent(output_fig)
+        fig = plt.figure(figsize=(10.6, 8.6), dpi=DPI)
+        outer = GridSpec(
+            nrows=2,
+            ncols=2,
+            width_ratios=[1, 1],
+            height_ratios=[1, 1],
+            wspace=0.38,
+            hspace=0.34,
+            figure=fig,
+        )
+
+        ax_network, axes_b = _add_routing_structure_and_sensitivity_panels(
+            fig,
+            outer[0, 0],
+            outer[0, 1],
+            long_df,
+        )
+        ax_b_frame = fig.add_subplot(outer[0, 1], frame_on=False)
+        ax_b_frame.set_axis_off()
+
+        ax_c = fig.add_subplot(outer[1, 0])
+        stacked_barh(
+            ax_c,
+            top_node,
+            label_col="Label",
+            label_fontsize=10.4,
+            axis_fontsize=12.3,
+            tick_fontsize=10.8,
+        )
+        ax_d = fig.add_subplot(outer[1, 1])
+        stacked_barh(
+            ax_d,
+            top_delta,
+            label_col="Label",
+            label_fontsize=10.4,
+            axis_fontsize=12.3,
+            tick_fontsize=10.8,
+        )
+
+        label_fontsize = 17
+        for panel_ax, label in [(ax_network, "a"), (ax_b_frame, "b"), (ax_c, "c"), (ax_d, "d")]:
+            panel_ax.text(
+                -0.12,
+                1.06,
+                label,
+                transform=panel_ax.transAxes,
+                fontsize=label_fontsize,
+                fontweight="bold",
+                va="top",
+                ha="left",
+            )
+
+        curve_handles, curve_labels = axes_b[0, 0].get_legend_handles_labels()
+        ax_b_frame.legend(
+            curve_handles,
+            curve_labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.12),
+            ncol=4,
+            frameon=False,
+            fontsize=9.6,
+            handlelength=2.0,
+            columnspacing=0.8,
+        )
+        variance_handles, variance_labels = ax_c.get_legend_handles_labels()
+        fig.legend(
+            variance_handles,
+            variance_labels,
+            loc="lower center",
+            ncol=3,
+            fontsize=10.8,
+            frameon=False,
+            bbox_to_anchor=(0.5, 0.005),
+        )
+        _scale_figure_fonts(fig, 1.12)
+        fig.subplots_adjust(left=0.105, right=0.985, top=0.965, bottom=0.10)
+        save_figure_both(fig, output_fig, dpi=DPI, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
+        return output_fig
+
+
+    def run_revised_FIG3(long_df: pd.DataFrame, workflow):
+        """Generate revised Fig. 3 and its slope/variance tables."""
+        ensure_parent(REVISED_FIG3_SLOPE_TABLE)
+        compute_slopes(long_df).to_csv(REVISED_FIG3_SLOPE_TABLE, index=False)
+        top_node, top_delta = _calculate_and_save_variance_outputs(long_df, workflow)
+        output = plot_revised_FIG3(long_df, top_node, top_delta)
+        print(f"Fig. 3 saved to: {output}")
+        return output
+
+
+    def plot_revised_FIG4(
+        all_gdf,
+        valid_gdf,
+        invalid_gdf,
+        output_fig: Path = REVISED_FIG4_OUTPUT,
+    ):
+        """Plot the map, implied assessment values, and catchment distribution."""
+        output_fig = ensure_parent(output_fig)
+        implied_df = load_implied_alpha_gw_values()
+        fig = plt.figure(figsize=FIG4_FIGSIZE, dpi=DPI)
+        gs = GridSpec(
+            2,
+            1,
+            height_ratios=FIG4_OUTER_HEIGHT_RATIOS,
+            hspace=FIG4_OUTER_HSPACE,
+            figure=fig,
+        )
+        ax_map = fig.add_subplot(gs[0, 0])
+        plot_rgw0_world_map(
+            fig,
+            ax_map,
+            all_gdf,
+            valid_gdf,
+            invalid_gdf,
+            include_distribution=False,
+            colorbar_side="inset",
+        )
+        ax_combined = fig.add_subplot(gs[1, 0])
+        panel_stats = plot_combined_alpha_gw_panel(ax_combined, valid_gdf, implied_df)
+
+        fig.subplots_adjust(left=0.075, right=0.985, top=0.955, bottom=0.105)
+        fig.canvas.draw()
+        map_position = ax_map.get_position()
+        combined_position = ax_combined.get_position()
+        ax_combined.set_position([map_position.x0, combined_position.y0, map_position.width, map_position.height])
+        ax_map.text(0.0, 1.035, "a", transform=ax_map.transAxes, fontsize=17, fontweight="bold", va="bottom", ha="left")
+        ax_combined.text(0.0, 1.035, "b", transform=ax_combined.transAxes, fontsize=17, fontweight="bold", va="bottom", ha="left")
+        _scale_figure_fonts(fig, FIG4_FONT_SCALE)
+        save_figure_both(fig, output_fig, dpi=DPI, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
+        return output_fig, panel_stats, implied_df
+
+
+    def run_revised_FIG4():
+        """Generate revised Fig. 4 and save its distribution statistics."""
+        all_gdf, valid_gdf, invalid_gdf, _rgw0_df = load_rgw0_geodata()
+        summary = summarize_rgw0_values(valid_gdf)
+        output, panel_stats, implied_df = plot_revised_FIG4(all_gdf, valid_gdf, invalid_gdf)
+        for key, value in panel_stats.items():
+            summary[key] = value
+        mapped_area_km2 = float(summary.loc[0, "valid_area_km2"])
+        n_units = int(summary.loc[0, "n_valid_0_1"])
+        land_fraction = mapped_area_km2 / NON_ANTARCTIC_LAND_AREA_KM2
+        summary["non_antarctic_land_area_km2"] = NON_ANTARCTIC_LAND_AREA_KM2
+        summary["non_antarctic_land_fraction_covered"] = land_fraction
+        ensure_parent(REVISED_FIG4_SUMMARY_TABLE)
+        summary.to_csv(REVISED_FIG4_SUMMARY_TABLE, index=False)
+        implied_df.to_csv(ensure_parent(REVISED_FIG4_IMPLIED_TABLE), index=False)
+        caption_note = FIG4_CAPTION_NOTE.format(
+            n_units=n_units,
+            mapped_area_million=mapped_area_km2 / 1_000_000.0,
+            land_fraction_pct=100.0 * land_fraction,
+        )
+        ensure_parent(REVISED_FIG4_CAPTION_NOTE).write_text(caption_note + "\n", encoding="utf-8")
+        print(f"Fig. 4 saved to: {output}")
+        print(f"Fig. 4 summary table saved to: {REVISED_FIG4_SUMMARY_TABLE}")
+        print(f"Fig. 4 implied alphaGW table saved to: {REVISED_FIG4_IMPLIED_TABLE}")
+        print(f"Fig. 4 caption note saved to: {REVISED_FIG4_CAPTION_NOTE}")
+        return output, REVISED_FIG4_SUMMARY_TABLE
+
+
+    def write_main_figure_order_manifest(include_fig4: bool = True):
+        """Write the manuscript figure order and panel provenance."""
+        rows = [
+            {
+                "figure": "Fig1",
+                "file": "Fig1.tiff",
+                "panels": "a-c",
+                "content": "Global networks and node-level centrality sensitivity",
+            },
+            {
+                "figure": "Fig2",
+                "file": "Fig2.tiff",
+                "panels": "a-g",
+                "content": "Delta matrices and ranked pathway uncertainty",
+            },
+            {
+                "figure": "Fig3",
+                "file": "Fig3.tiff",
+                "panels": "a-d",
+                "content": "Groundwater routing, node sensitivity, and variance attribution",
+            },
+        ]
+        if include_fig4:
+            rows.append(
+                {
+                    "figure": "Fig4",
+                    "file": "Fig4.tiff",
+                    "panels": "a-b",
+                    "content": "Catchment alphaGW map, implied assessment values, and distribution",
+                }
+            )
+        manifest_path = ensure_parent(MAIN_FIGURE_DIR / "figure_order.tsv")
+        pd.DataFrame(rows).to_csv(manifest_path, sep="\t", index=False)
+        return manifest_path
+
+
+    # =============================================================================
     # Main entry point
     # =============================================================================
     def main():
-        """Run selected figures. Change RUN_FIG2-RUN_FIG4 at the top if needed."""
+        """Run the revised manuscript figures in numerical order."""
+        if RUN_FIG1:
+            run_revised_FIG1()
+
         if RUN_FIG2:
-            run_FIG2()
+            run_revised_FIG2()
 
-        if RUN_FIG3:
-            run_FIG3()
-
-        # Fig. 3 and Fig. 4 use the same external sensitivity workflow and workbook.
         workflow = None
         long_df = None
-        if RUN_FIG1 or RUN_FIG4:
+        if RUN_FIG3:
             workflow, workflow_path = load_sensitivity_workflow()
             long_df, workbook_path = build_sensitivity_long_dataframe(workflow)
             print(f"Sensitivity workflow script: {workflow_path}")
             print(f"Sensitivity workbook: {workbook_path}")
 
-        if RUN_FIG1:
-            run_FIG1(long_df=long_df.copy(), workflow=workflow)
+            run_revised_FIG3(long_df=long_df.copy(), workflow=workflow)
 
         if RUN_FIG4:
-            run_fig4(long_df=long_df.copy(), workflow=workflow)
+            run_revised_FIG4()
+
+        manifest_path = write_main_figure_order_manifest(include_fig4=RUN_FIG4)
+        print(f"Main-figure order manifest: {manifest_path}")
 
     _public = {k: v for k, v in locals().items() if not k.startswith("__")}
     return types.SimpleNamespace(**_public)

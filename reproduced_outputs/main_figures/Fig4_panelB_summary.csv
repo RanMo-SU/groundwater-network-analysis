@@ -1,0 +1,2 @@
+n_valid_0_1,valid_area_km2,area_weighted_mean,arithmetic_mean,ordinary_median,std,min,q25,q75,max,weighted_q25,weighted_median,weighted_q75,independent_mean,independent_uncertainty,independent_lower,independent_upper,non_antarctic_land_area_km2,non_antarctic_land_fraction_covered
+3519,28685445.446635887,0.5826660878441281,0.1609093426586086,0.001933305119137277,0.25998424187133223,2.8131581059389257e-08,4.600347771883655e-05,0.24435045132193814,0.9989,0.3324754256935451,0.657,0.747513748055415,0.59,0.07,0.52,0.6599999999999999,134900000.0,0.21264229389648545
